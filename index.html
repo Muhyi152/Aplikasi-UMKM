@@ -5,75 +5,117 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kasir UMKM PRO</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    /* Tambahan style singkat agar fungsional */
+    .page-section { display: none; }
+    .page-section.active { display: block; }
+    .sidebar ul.show { display: block; }
+    .produk-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 15px; }
+    .cart-section { margin-top: 20px; border-top: 2px solid #ccc; padding-top: 10px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    table th, table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+  </style>
 </head>
 <body>
 
 <div class="app">
 
-<!-- ================= SIDEBAR ================= -->
-<aside class="sidebar">
-  <div class="sidebar-header">
-    <h2>🏪 Kasir</h2>
-    <button class="menu-toggle" onclick="toggleMenu()">☰</button>
-  </div>
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2>🏪 Kasir UMKM</h2>
+      <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+    </div>
 
-  <ul id="menuList">
-    <li onclick="showPage('produk');closeMenu()">Produk</li>
-    <li onclick="showPage('transaksi');closeMenu()">Transaksi</li>
-    <li onclick="showPage('riwayat');closeMenu()">Riwayat</li>
-  </ul>
-</aside>
+    <ul id="menuList">
+      <li onclick="showPage('produk')">📦 Produk</li>
+      <li onclick="showPage('transaksi')">🛒 Kasir</li>
+      <li onclick="showPage('riwayat')">📜 Riwayat</li>
+    </ul>
+  </aside>
 
-<!-- ================= CONTENT ================= -->
-<main class="content">
+  <!-- ================= CONTENT ================= -->
+  <main class="content">
 
-<!-- ================= PRODUK ================= -->
-<section id="produk" class="page active">
-  <h3>📦 Manajemen Produk</h3>
+    <!-- ================= HALAMAN PRODUK ================= -->
+    <section id="produk" class="page-section active">
+      <h3>📦 Manajemen Produk</h3>
+      <div class="form">
+        <input type="text" id="namaProduk" placeholder="Nama Produk">
+        <input type="number" id="hargaProduk" placeholder="Harga Jual">
 
-  <div class="form">
-    <input id="namaProduk" placeholder="Nama Produk">
-    <input id="hargaProduk" type="number" placeholder="Harga">
+        <!-- FOTO BASE64 (DIISI DARI FLUTTER) -->
+        <input type="hidden" id="fotoProduk">
+        
+        <button type="button" onclick="ambilFoto()" style="background: #2196F3; color: white;">
+          📷 Pilih Foto dari Galeri
+        </button>
 
-    <!-- FOTO BASE64 (DIISI DARI FLUTTER) -->
-    <input type="hidden" id="fotoProduk">
+        <img id="previewFoto" src="" style="display:none; margin-top:10px; width:100px; height:100px; border-radius:8px; object-fit:cover;">
 
-    <button type="button" onclick="ambilFoto()">📷 Pilih Foto Produk</button>
+        <button type="button" id="btnSimpan" onclick="simpanProduk()" style="margin-top:10px; background: #4CAF50; color: white;">
+          Tambah Produk
+        </button>
+      </div>
 
-    <img
-      id="previewFoto"
-      style="display:none;margin-top:10px;width:120px;border-radius:8px"
-    >
+      <div id="produkList" class="produk-grid"></div>
+    </section>
 
-    <button type="button" id="btnSimpan" onclick="simpanProduk()">
-      Tambah Produk
-    </button>
-  </div>
+    <!-- ================= HALAMAN TRANSAKSI ================= -->
+    <section id="transaksi" class="page-section">
+      <h3>🛒 Pilih Produk</h3>
+      <div id="produkTransaksi" class="produk-grid"></div>
 
-  <div id="produkList" class="produk-grid"></div>
-</section>
+      <div class="cart-section">
+        <h3>🧺 Keranjang Belanja</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Qty</th>
+              <th>Subtotal</th>
+              <th>Hapus</th>
+            </tr>
+          </thead>
+          <tbody id="keranjang"></tbody>
+        </table>
 
-<!-- ================= TRANSAKSI ================= -->
-<section id="transaksi" class="page">
-  <h3>🧾 Transaksi</h3>
-  <div id="produkTransaksi" class="produk-grid"></div>
-</section>
+        <div class="pembayaran" style="margin-top:15px; background: #f9f9f9; padding: 10px;">
+          <h4>Total: Rp <span id="total">0</span></h4>
+          <input type="number" id="bayar" placeholder="Jumlah Bayar" oninput="hitungKembalian()">
+          <h4>Kembalian: Rp <span id="kembalian">0</span></h4>
+          <button onclick="checkout()" style="width: 100%; padding: 12px; background: #ff9800; color: white; border: none; font-weight: bold;">
+            SELESAI & SIMPAN
+          </button>
+        </div>
+      </div>
+    </section>
 
-<!-- ================= RIWAYAT ================= -->
-<section id="riwayat" class="page">
-  <h3>📜 Riwayat Transaksi</h3>
-  <table>
-    <tbody id="riwayatList"></tbody>
-  </table>
-</section>
+    <!-- ================= HALAMAN RIWAYAT ================= -->
+    <section id="riwayat" class="page-section">
+      <h3>📜 Riwayat Transaksi</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Waktu</th>
+            <th>Total</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="riwayatList"></tbody>
+      </table>
+    </section>
 
-</main>
+  </main>
 </div>
 
+<!-- HUBUNGKAN KE FILE JS EKSTERNAL ANDA -->
 <script src="script.js"></script>
 
 <script>
-/* ================= UI ================= */
+/* ================= UI NAVIGATION ================= */
+// Fungsi showPage sudah ada di script.js Anda, pastikan namanya sinkron.
+// Jika di script.js belum ada fungsi toggleMenu, pakai yang ini:
 function toggleMenu(){
   document.getElementById("menuList").classList.toggle("show");
 }
@@ -83,28 +125,30 @@ function closeMenu(){
 }
 
 /* ================= FLUTTER BRIDGE ================= */
+// SINKRONKAN NAMA CHANNEL DENGAN FLUTTER: 'ImageChannel'
 
-// DIPANGGIL OLEH TOMBOL HTML
 function ambilFoto() {
-  if (window.ImagePickerChannel) {
-    console.log("Memanggil Flutter Image Picker");
-    window.ImagePickerChannel.postMessage("pick");
+  // Cek ImageChannel (disesuaikan dengan WebViewController di Flutter)
+  if (window.ImageChannel) {
+    console.log("Memanggil Galeri HP via Flutter...");
+    window.ImageChannel.postMessage("pick");
   } else {
-    alert("Image picker belum siap");
-    console.error("ImagePickerChannel tidak ditemukan");
+    alert("Fitur Galeri hanya bisa dibuka melalui Aplikasi HP");
+    console.error("ImageChannel tidak ditemukan");
   }
 }
 
-// DIPANGGIL DARI FLUTTER
-function setFoto(base64) {
-  console.log("Foto diterima dari Flutter");
-
+// Fungsi ini akan dipanggil otomatis oleh Flutter lewat _controller.runJavaScript
+window.setFoto = function(base64) {
+  console.log("Foto diterima!");
   const input = document.getElementById("fotoProduk");
   const preview = document.getElementById("previewFoto");
 
-  input.value = base64;
-  preview.src = base64;
-  preview.style.display = "block";
+  if (input && preview) {
+    input.value = base64;
+    preview.src = base64;
+    preview.style.display = "block";
+  }
 }
 </script>
 
