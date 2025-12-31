@@ -35,13 +35,15 @@
     <input id="namaProduk" placeholder="Nama Produk">
     <input id="hargaProduk" type="number" placeholder="Harga">
 
-    <!-- 🔥 FOTO DARI FLUTTER -->
+    <!-- FOTO BASE64 (DIISI DARI FLUTTER) -->
     <input type="hidden" id="fotoProduk">
 
     <button type="button" onclick="ambilFoto()">📷 Pilih Foto Produk</button>
 
-    <img id="previewFoto"
-         style="display:none;margin-top:10px;width:120px;border-radius:8px">
+    <img
+      id="previewFoto"
+      style="display:none;margin-top:10px;width:120px;border-radius:8px"
+    >
 
     <button type="button" id="btnSimpan" onclick="simpanProduk()">
       Tambah Produk
@@ -71,26 +73,32 @@
 <script src="script.js"></script>
 
 <script>
+/* ================= UI ================= */
 function toggleMenu(){
   document.getElementById("menuList").classList.toggle("show");
 }
+
 function closeMenu(){
   document.getElementById("menuList").classList.remove("show");
 }
 
 /* ================= FLUTTER BRIDGE ================= */
 
-// DIPANGGIL OLEH TOMBOL
+// DIPANGGIL OLEH TOMBOL HTML
 function ambilFoto() {
-  if (window.ImageChannel) {
-    window.ImageChannel.postMessage("pick");
+  if (window.ImagePickerChannel) {
+    console.log("Memanggil Flutter Image Picker");
+    window.ImagePickerChannel.postMessage("pick");
   } else {
     alert("Image picker belum siap");
+    console.error("ImagePickerChannel tidak ditemukan");
   }
 }
 
 // DIPANGGIL DARI FLUTTER
 function setFoto(base64) {
+  console.log("Foto diterima dari Flutter");
+
   const input = document.getElementById("fotoProduk");
   const preview = document.getElementById("previewFoto");
 
