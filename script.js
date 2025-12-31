@@ -50,7 +50,6 @@ function simpanProduk() {
     }
 
     if (editIndex !== null) {
-        // Mode Edit
         if (file) {
             const reader = new FileReader();
             reader.onload = () => {
@@ -64,9 +63,8 @@ function simpanProduk() {
             aksiSelesaiSimpan();
         }
     } else {
-        // Mode Tambah Baru
         if (!file) {
-            alert("Gambar wajib diisi untuk produk baru");
+            alert("Gambar wajib diisi");
             return;
         }
         const reader = new FileReader();
@@ -95,8 +93,8 @@ function renderProduk() {
             <h4>${p.nama}</h4>
             <p>Rp ${formatRupiah(p.harga)}</p>
             <div class="produk-action">
-                <button class="btn-edit" onclick="editProduk(${i})">Edit</button>
-                <button class="btn-hapus" onclick="hapusProduk(${i})">Hapus</button>
+                <button onclick="editProduk(${i})">Edit</button>
+                <button onclick="hapusProduk(${i})">Hapus</button>
             </div>
         </div>`;
     });
@@ -107,7 +105,6 @@ function editProduk(i) {
     namaProduk.value = produk[i].nama;
     hargaProduk.value = produk[i].harga;
     btnSimpan.innerText = "Update Produk";
-    window.scrollTo(0, 0);
 }
 
 function hapusProduk(i) {
@@ -123,10 +120,9 @@ function resetForm() {
     hargaProduk.value = "";
     fotoProduk.value = "";
     btnSimpan.innerText = "Tambah Produk";
-    editIndex = null;
 }
 
-// ================== TRANSAKSI & KERANJANG ==================
+// ================== TRANSAKSI ==================
 function renderProdukTransaksi() {
     produkTransaksi.innerHTML = "";
     produk.forEach((p, i) => {
@@ -135,7 +131,7 @@ function renderProdukTransaksi() {
             <img src="${p.foto}">
             <h4>${p.nama}</h4>
             <p>Rp ${formatRupiah(p.harga)}</p>
-            <button class="btn-beli" onclick="beliProduk(${i})">🛒 Beli</button>
+            <button onclick="beliProduk(${i})">🛒 Beli</button>
         </div>`;
     });
 }
@@ -156,10 +152,6 @@ function beliProduk(i) {
         });
     }
     renderKeranjang();
-     const target = document.getElementById("keranjangSection");
-    if (target) {
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
 }
 
 function renderKeranjang() {
@@ -171,41 +163,14 @@ function renderKeranjang() {
         keranjang.innerHTML += `
         <tr>
             <td>${item.nama}</td>
-            <td>Rp ${formatRupiah(item.harga)}</td>
-            <td>
-                <div class="qty-control">
-                    <!-- Tambahkan class 'qty-btn minus' -->
-                    <button class="qty-btn minus" onclick="kurangQty(${i})">−</button>
-                    <span class="qty-value">${item.qty}</span>
-                    <!-- Tambahkan class 'qty-btn plus' -->
-                    <button class="qty-btn plus" onclick="tambahQty(${i})">+</button>
-                </div>
-            </td>
+            <td>${item.qty}</td>
             <td>Rp ${formatRupiah(item.subtotal)}</td>
-            <td>
-                <!-- Tambahkan class 'btn-hapus-cart' -->
-                <button class="btn-hapus-cart" onclick="hapusItem(${i})">✖</button>
-            </td>
+            <td><button onclick="hapusItem(${i})">✖</button></td>
         </tr>`;
     });
+
     total.innerText = formatRupiah(totalBayar);
     hitungKembalian();
-}
-
-function tambahQty(i) {
-    keranjangData[i].qty++;
-    keranjangData[i].subtotal = keranjangData[i].qty * keranjangData[i].harga;
-    renderKeranjang();
-}
-
-function kurangQty(i) {
-    if (keranjangData[i].qty > 1) {
-        keranjangData[i].qty--;
-        keranjangData[i].subtotal = keranjangData[i].qty * keranjangData[i].harga;
-    } else {
-        keranjangData.splice(i, 1);
-    }
-    renderKeranjang();
 }
 
 function hapusItem(i) {
@@ -213,23 +178,21 @@ function hapusItem(i) {
     renderKeranjang();
 }
 
-// ================== PROSES BAYAR ==================
+// ================== BAYAR ==================
 function hitungKembalian() {
     const bayarVal = Number(bayar.value) || 0;
-    const kembali = bayarVal - totalBayar;
-    kembalian.innerText = formatRupiah(kembali > 0 ? kembali : 0);
+    kembalian.innerText = formatRupiah(Math.max(bayarVal - totalBayar, 0));
 }
 
 function prosesBayar() {
     const bayarVal = Number(bayar.value) || 0;
 
     if (keranjangData.length === 0) {
-        alert("Keranjang masih kosong!");
+        alert("Keranjang kosong!");
         return;
     }
-
     if (bayarVal < totalBayar) {
-        alert("Uang pembayaran kurang!");
+        alert("Uang kurang!");
         return;
     }
 
@@ -240,46 +203,42 @@ function prosesBayar() {
         total: totalBayar,
         bayar: bayarVal,
         kembali: bayarVal - totalBayar,
-        items: [...keranjangData] // Copy array keranjang
+        items: [...keranjangData]
     };
 
     riwayat.push(transaksi);
     localStorage.setItem("riwayat", JSON.stringify(riwayat));
 
-    // Panggil fungsi cetak
+    // 🔥 KIRIM KE FLUTTER BLUETOOTH
+    kirimKeBluetoothPrinter(transaksi);
+
+    // 🖨 PRINT BROWSER (OPSIONAL)
     cetakStruk(transaksi);
 
-    // Reset Form Transaksi (Tanpa reload halaman)
     keranjangData = [];
     bayar.value = "";
     renderKeranjang();
-    showPage("riwayat"); // Pindah ke riwayat untuk melihat hasil
+    showPage("riwayat");
 }
 
+// ================== FLUTTER BLUETOOTH ==================
+function kirimKeBluetoothPrinter(transaksi) {
+    if (window.PrintChannel) {
+        window.PrintChannel.postMessage(JSON.stringify({
+            toko: "TOKO MAJU JAYA",
+            alamat: "Jl. Contoh No. 123",
+            ...transaksi,
+            footer: "Terima Kasih 🙏"
+        }));
+    }
+}
+
+// ================== PRINT BROWSER ==================
 function cetakStruk(data) {
-    // 1. Masukkan data ke elemen HTML struk (sama seperti sebelumnya)
-    document.getElementById("pTanggal").innerText = `${data.tanggal} ${data.waktu}`;
-    document.getElementById("pTotal").innerText = formatRupiah(data.total);
-    document.getElementById("pBayar").innerText = formatRupiah(data.bayar);
-    document.getElementById("pKembali").innerText = formatRupiah(data.kembali);
-
-    const pItems = document.getElementById("pItems");
-    pItems.innerHTML = "";
-    data.items.forEach(item => {
-        pItems.innerHTML += `
-        <tr>
-            <td style="padding: 5px 0;">${item.nama}</td>
-            <td align="center">${item.qty}</td>
-            <td align="right">${formatRupiah(item.subtotal)}</td>
-        </tr>`;
-    });
-
-    // 2. Panggil perintah cetak browser secara langsung
-    // Karena kita sudah pakai CSS @media print di atas, 
-    // browser akan otomatis hanya mencetak area struk saja.
     window.print();
 }
 
+// ================== RIWAYAT ==================
 function tampilRiwayat() {
     riwayatList.innerHTML = "";
     riwayat.forEach((r, i) => {
@@ -287,57 +246,18 @@ function tampilRiwayat() {
         <tr>
             <td>${r.tanggal} ${r.waktu}</td>
             <td>Rp ${formatRupiah(r.total)}</td>
-            <td>Rp ${formatRupiah(r.bayar)}</td>
-            <td>Rp ${formatRupiah(r.kembali)}</td>
-            <td><button onclick="cetakUlang(${i})">🖨 Cetak</button></td>
+            <td><button onclick="cetakUlang(${i})">🖨</button></td>
         </tr>`;
     });
-    hitungPendapatanHarian();
 }
 
-function cetakUlang(index) {
-    cetakStruk(riwayat[index]);
+function cetakUlang(i) {
+    kirimKeBluetoothPrinter(riwayat[i]);
+    cetakStruk(riwayat[i]);
 }
 
-function hitungPendapatanHarian() {
-    const pendapatanHarian = document.getElementById("pendapatanHarian");
-    const pendapatanHariIni = document.getElementById("pendapatanHariIni");
-    
-    if (!pendapatanHarian) return;
-
-    let totalHariIni = 0;
-    const tglSekarang = new Date().toLocaleDateString("id-ID");
-
-    // Kelompokkan data berdasarkan tanggal
-    const rekap = riwayat.reduce((acc, curr) => {
-        acc[curr.tanggal] = (acc[curr.tanggal] || 0) + curr.total;
-        if (curr.tanggal === tglSekarang) totalHariIni += curr.total;
-        return acc;
-    }, {});
-
-    pendapatanHarian.innerHTML = "";
-    for (let tgl in rekap) {
-        pendapatanHarian.innerHTML += `
-        <tr>
-            <td>${tgl}</td>
-            <td>Rp ${formatRupiah(rekap[tgl])}</td>
-        </tr>`;
-    }
-    
-    if(pendapatanHariIni) pendapatanHariIni.innerText = "Rp " + formatRupiah(totalHariIni);
-}
-
-function resetRiwayat() {
-    if (confirm("Hapus semua riwayat transaksi?")) {
-        riwayat = [];
-        localStorage.setItem("riwayat", JSON.stringify(riwayat));
-        tampilRiwayat();
-    }
-}
-
-// ================== INISIALISASI AWAL ==================
+// ================== INIT ==================
 document.addEventListener("DOMContentLoaded", () => {
     renderProduk();
-    // Default buka halaman produk
-    showPage('produk');
+    showPage("produk");
 });
