@@ -1,26 +1,20 @@
 // ================== DOM ELEMENTS ==================
 const namaProduk = document.getElementById("namaProduk");
 const hargaProduk = document.getElementById("hargaProduk");
-const fotoProduk = document.getElementById("fotoProduk"); // hidden input base64
+const fotoProduk = document.getElementById("fotoProduk"); 
 const btnSimpan = document.getElementById("btnSimpan");
-
 const produkList = document.getElementById("produkList");
 const produkTransaksi = document.getElementById("produkTransaksi");
-
 const keranjang = document.getElementById("keranjang");
 const total = document.getElementById("total");
-
 const bayarInput = document.getElementById("bayar");
 const kembalian = document.getElementById("kembalian");
-
 const riwayatList = document.getElementById("riwayatList");
 const previewFoto = document.getElementById("previewFoto");
 
 // ================== DATA INITIALIZATION ==================
-// Pastikan mengambil data terbaru dari localStorage saat startup
 let produk = JSON.parse(localStorage.getItem("produk")) || [];
 let riwayat = JSON.parse(localStorage.getItem("riwayat")) || [];
-
 let editIndex = null;
 let keranjangData = [];
 let totalBayar = 0;
@@ -30,38 +24,28 @@ function formatRupiah(angka = 0) {
     return Number(angka).toLocaleString("id-ID");
 }
 
-// Fungsi Navigasi Halaman
 function showPage(pageId) {
-    // 1. Sembunyikan semua section
     document.querySelectorAll('.page-section').forEach(section => {
         section.style.display = 'none';
         section.classList.remove('active');
     });
-
-    // 2. Tampilkan yang dipilih
     const activePage = document.getElementById(pageId);
     if (activePage) {
         activePage.style.display = 'block';
         activePage.classList.add('active');
     }
-
-    // 3. Render data sesuai halaman
     if (pageId === 'transaksi') renderProdukTransaksi();
     if (pageId === 'produk') renderProduk();
     if (pageId === 'riwayat') renderRiwayat();
-
-    // Tutup menu sidebar di mobile setelah klik
     if (typeof closeMenu === "function") closeMenu();
 }
 
 // ================== FOTO (FLUTTER BRIDGE) ==================
 function ambilFoto() {
-    if (typeof ImageChannel !== 'undefined') {
-        ImageChannel.postMessage("pick");
-    } else if (window.ImageChannel) {
+    if (window.ImageChannel) {
         window.ImageChannel.postMessage("pick");
     } else {
-        alert("Image picker belum siap. Buka melalui aplikasi Flutter.");
+        alert("Gunakan aplikasi mobile untuk mengambil foto.");
     }
 }
 
@@ -79,12 +63,8 @@ function simpanProduk() {
     const harga = parseInt(hargaProduk.value);
     const fotoBase64 = fotoProduk.value;
 
-    if (!nama || isNaN(harga) || harga <= 0) {
-        alert("Nama dan harga wajib diisi");
-        return;
-    }
-    if (!fotoBase64) {
-        alert("Foto produk wajib dipilih");
+    if (!nama || isNaN(harga) || harga <= 0 || !fotoBase64) {
+        alert("Lengkapi data produk dan foto!");
         return;
     }
 
@@ -98,7 +78,7 @@ function simpanProduk() {
     localStorage.setItem("produk", JSON.stringify(produk));
     resetForm();
     renderProduk();
-    alert("Produk berhasil disimpan");
+    alert("Produk disimpan!");
 }
 
 function renderProduk() {
@@ -209,20 +189,23 @@ if (bayarInput) {
     bayarInput.addEventListener("input", hitungKembalian);
 }
 
-// ================== CHECKOUT & RIWAYAT ==================
+// ================== CHECKOUT & PRINT ==================
 function checkout() {
     if (keranjangData.length === 0) return alert("Keranjang belanja kosong!");
     
     const bayarVal = Number(bayarInput.value) || 0;
     if (bayarVal < totalBayar) return alert("Uang pembayaran kurang!");
 
+    // Buat data transaksi lengkap
     const transaksiBaru = {
-        id: Date.now(),
+        id: "TRX-" + Date.now(),
         tanggal: new Date().toLocaleString('id-ID'),
         items: [...keranjangData],
         total: totalBayar,
         bayar: bayarVal,
-        kembali: bayarVal - totalBayar
+        kembali: bayarVal - totalBayar,
+        toko: "KASIR UMKM PRO", // Opsional: Tambahkan info toko
+        alamat: "Jl. Raya Ekonomi No. 1"
     };
 
     // 1. Simpan ke LocalStorage
@@ -230,12 +213,14 @@ function checkout() {
     listRiwayat.push(transaksiBaru);
     localStorage.setItem("riwayat", JSON.stringify(listRiwayat));
 
-    // 2. Beri info ke Flutter (jika ada)
+    // 2. TRIGGER CETAK KE PRINTER FLUTTER
     if (window.PrintChannel) {
         window.PrintChannel.postMessage(JSON.stringify(transaksiBaru));
+    } else {
+        console.log("PrintChannel tidak tersedia (Mungkin buka di browser biasa)");
     }
 
-    alert("Transaksi Berhasil Disimpan!");
+    alert("Transaksi Berhasil & Mencetak Struk...");
 
     // 3. Reset Form Kasir
     keranjangData = [];
@@ -246,10 +231,23 @@ function checkout() {
     showPage('riwayat');
 }
 
+// Fungsi Cetak Ulang (untuk dipanggil dari tabel riwayat)
+function cetakUlang(index) {
+    const dataRiwayat = JSON.parse(localStorage.getItem("riwayat")) || [];
+    // Ambil data berdasarkan urutan asli (bukan urutan reverse)
+    const data = dataRiwayat[index];
+    
+    if (window.PrintChannel && data) {
+        window.PrintChannel.postMessage(JSON.stringify(data));
+        alert("Mencetak ulang struk...");
+    } else {
+        alert("Printer tidak tersedia atau data tidak ditemukan.");
+    }
+}
+
 function renderRiwayat() {
     if (!riwayatList) return;
     
-    // Selalu ambil data terbaru dari localStorage
     const dataRiwayat = JSON.parse(localStorage.getItem("riwayat")) || [];
     riwayatList.innerHTML = "";
 
@@ -258,14 +256,17 @@ function renderRiwayat() {
         return;
     }
 
-    // Tampilkan dari yang paling baru (reverse)
-    dataRiwayat.reverse().forEach((item, index) => {
+    // Kita reverse agar yang terbaru di atas, tapi simpan index aslinya
+    const sortedRiwayat = dataRiwayat.map((item, index) => ({...item, originalIndex: index})).reverse();
+
+    sortedRiwayat.forEach((item) => {
         riwayatList.innerHTML += `
             <tr>
                 <td>${item.tanggal}</td>
                 <td style="font-weight:bold; color:#d84315;">Rp ${formatRupiah(item.total)}</td>
-                <td>
-                    <button onclick="hapusRiwayat(${index})" style="background:#f44336; color:white; border:none; padding:5px 10px; border-radius:5px;">Hapus</button>
+                <td style="display:flex; gap:5px; justify-content:center;">
+                    <button onclick="cetakUlang(${item.originalIndex})" style="background:#2196f3; color:white; border:none; padding:5px 8px; border-radius:5px;">🖨️</button>
+                    <button onclick="hapusRiwayat(${item.originalIndex})" style="background:#f44336; color:white; border:none; padding:5px 8px; border-radius:5px;">🗑️</button>
                 </td>
             </tr>`;
     });
@@ -274,10 +275,7 @@ function renderRiwayat() {
 function hapusRiwayat(index) {
     if (confirm("Hapus catatan riwayat ini?")) {
         let listRiwayat = JSON.parse(localStorage.getItem("riwayat")) || [];
-        // Karena di render tadi kita reverse, kita balik dulu untuk hapus sesuai index asli
-        listRiwayat.reverse().splice(index, 1);
-        listRiwayat.reverse(); // Balikkan lagi sebelum simpan
-        
+        listRiwayat.splice(index, 1);
         localStorage.setItem("riwayat", JSON.stringify(listRiwayat));
         renderRiwayat();
     }
@@ -285,5 +283,5 @@ function hapusRiwayat(index) {
 
 // ================== INITIALIZATION ==================
 document.addEventListener("DOMContentLoaded", () => {
-    showPage("produk"); // Tampilkan halaman produk saat pertama kali buka
+    showPage("produk");
 });
