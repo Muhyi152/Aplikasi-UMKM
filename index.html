@@ -34,7 +34,17 @@
   <div class="form" onsubmit="return false">
     <input id="namaProduk" placeholder="Nama Produk">
     <input id="hargaProduk" type="number" placeholder="Harga">
-    <input id="fotoProduk" type="file" accept="image/*">
+
+    <!-- ✅ FOTO DARI FLUTTER -->
+    <button type="button" onclick="pilihFoto()">📷 Pilih Foto Produk</button>
+
+    <!-- PREVIEW FOTO -->
+    <img id="previewFoto"
+         style="display:none;margin-top:10px;width:120px;border-radius:8px">
+
+    <!-- HIDDEN BASE64 -->
+    <input type="hidden" id="fotoProduk">
+
     <button type="button" id="btnSimpan" onclick="simpanProduk()">
       Tambah Produk
     </button>
@@ -49,7 +59,6 @@
 
   <div id="produkTransaksi" class="produk-grid"></div>
 
-  <!-- ✅ TARGET SCROLL -->
   <h4 id="keranjangSection">🛒 Keranjang</h4>
 
   <div class="table-wrapper">
@@ -98,25 +107,6 @@
   <button onclick="resetRiwayat()" class="btn-reset">
     🗑 Reset Riwayat
   </button>
-
-  <h4>📊 Pendapatan Per Hari</h4>
-
-  <div class="desktop-only">
-    <table>
-      <thead>
-        <tr>
-          <th>Tanggal</th>
-          <th>Total Pendapatan</th>
-        </tr>
-      </thead>
-      <tbody id="pendapatanHarian"></tbody>
-    </table>
-  </div>
-
-  <div class="mobile-only pendapatan-card">
-    <span class="label">Total Hari Ini</span>
-    <span class="nominal" id="pendapatanHariIni">Rp 0</span>
-  </div>
 </section>
 
 </main>
@@ -127,18 +117,9 @@
   <h3 style="text-align:center">KASIR UMKM</h3>
   <p style="text-align:center" id="pTanggal"></p>
   <hr>
-
   <table width="100%">
-    <thead>
-      <tr>
-        <th>Item</th>
-        <th>Qty</th>
-        <th align="right">Sub</th>
-      </tr>
-    </thead>
     <tbody id="pItems"></tbody>
   </table>
-
   <hr>
   <p>Total : Rp <span id="pTotal"></span></p>
   <p>Bayar : Rp <span id="pBayar"></span></p>
@@ -155,6 +136,25 @@ function toggleMenu(){
 }
 function closeMenu(){
   document.getElementById("menuList").classList.remove("show");
+}
+
+/* ===== DIPANGGIL DARI FLUTTER ===== */
+function terimaFotoDariFlutter(base64) {
+  const input = document.getElementById("fotoProduk");
+  const preview = document.getElementById("previewFoto");
+
+  input.value = base64;
+  preview.src = base64;
+  preview.style.display = "block";
+}
+
+/* ===== PANGGIL FLUTTER ===== */
+function pilihFoto() {
+  if (window.ImagePickerChannel) {
+    window.ImagePickerChannel.postMessage("pick");
+  } else {
+    alert("Image picker belum siap");
+  }
 }
 </script>
 
