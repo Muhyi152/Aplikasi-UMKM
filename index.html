@@ -1,155 +1,194 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kasir UMKM PRO</title>
-  <link rel="stylesheet" href="style.css">
-  <style>
-    /* Tambahan style singkat agar fungsional */
-    .page-section { display: none; }
-    .page-section.active { display: block; }
-    .sidebar ul.show { display: block; }
-    .produk-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 15px; }
-    .cart-section { margin-top: 20px; border-top: 2px solid #ccc; padding-top: 10px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-    table th, table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kasir UMKM PRO</title>
+    
+    <!-- Google Fonts: Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <!-- SweetAlert2 untuk Alert Modern -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- File CSS Eksternal -->
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        /* CSS Inline Tambahan untuk Transisi Halaman */
+        .page-section { display: none; }
+        .page-section.active { display: block; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </head>
 <body>
 
 <div class="app">
 
-  <!-- ================= SIDEBAR ================= -->
-  <aside class="sidebar">
-    <div class="sidebar-header">
-      <h2>🏪 Kasir UMKM</h2>
-      <button class="menu-toggle" onclick="toggleMenu()">☰</button>
-    </div>
-
-    <ul id="menuList">
-      <li onclick="showPage('produk')">📦 Produk</li>
-      <li onclick="showPage('transaksi')">🛒 Kasir</li>
-      <li onclick="showPage('riwayat')">📜 Riwayat</li>
-    </ul>
-  </aside>
-
-  <!-- ================= CONTENT ================= -->
-  <main class="content">
-
-    <!-- ================= HALAMAN PRODUK ================= -->
-    <section id="produk" class="page-section active">
-      <h3>📦 Manajemen Produk</h3>
-      <div class="form">
-        <input type="text" id="namaProduk" placeholder="Nama Produk">
-        <input type="number" id="hargaProduk" placeholder="Harga Jual">
-
-        <!-- FOTO BASE64 (DIISI DARI FLUTTER) -->
-        <input type="hidden" id="fotoProduk">
-        
-        <button type="button" onclick="ambilFoto()" style="background: #2196F3; color: white;">
-          📷 Pilih Foto dari Galeri
-        </button>
-
-        <img id="previewFoto" src="" style="display:none; margin-top:10px; width:100px; height:100px; border-radius:8px; object-fit:cover;">
-
-        <button type="button" id="btnSimpan" onclick="simpanProduk()" style="margin-top:10px; background: #4CAF50; color: white;">
-          Tambah Produk
-        </button>
-      </div>
-
-      <div id="produkList" class="produk-grid"></div>
-    </section>
-
-    <!-- ================= HALAMAN TRANSAKSI ================= -->
-    <section id="transaksi" class="page-section">
-      <h3>🛒 Pilih Produk</h3>
-      <div id="produkTransaksi" class="produk-grid"></div>
-
-      <div class="cart-section">
-        <h3>🧺 Keranjang Belanja</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>Item</th>
-              <th>Qty</th>
-              <th>Subtotal</th>
-              <th>Hapus</th>
-            </tr>
-          </thead>
-          <tbody id="keranjang"></tbody>
-        </table>
-
-        <div class="pembayaran" style="margin-top:15px; background: #f9f9f9; padding: 10px;">
-          <h4>Total: Rp <span id="total">0</span></h4>
-          <input type="number" id="bayar" placeholder="Jumlah Bayar" oninput="hitungKembalian()">
-          <h4>Kembalian: Rp <span id="kembalian">0</span></h4>
-          <button onclick="checkout()" style="width: 100%; padding: 12px; background: #ff9800; color: white; border: none; font-weight: bold;">
-            SELESAI & SIMPAN
-          </button>
+    <!-- ================= SIDEBAR / NAVIGATION ================= -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>🏪 KASIR PRO</h2>
+            <button class="menu-toggle" onclick="toggleMenu()">☰</button>
         </div>
-      </div>
-    </section>
 
-    <!-- ================= HALAMAN RIWAYAT ================= -->
-    <section id="riwayat" class="page-section">
-      <h3>📜 Riwayat Transaksi</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>Waktu</th>
-            <th>Total</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody id="riwayatList"></tbody>
-      </table>
-    </section>
+        <ul id="menuList">
+            <li onclick="showPage('produk')">📦 Manajemen Produk</li>
+            <li onclick="showPage('transaksi')">🛒 Kasir / Penjualan</li>
+            <li onclick="showPage('riwayat')">📜 Riwayat Transaksi</li>
+        </ul>
+    </aside>
 
-  </main>
+    <!-- ================= MAIN CONTENT ================= -->
+    <main class="content">
+
+        <!-- HALAMAN 1: MANAJEMEN PRODUK -->
+        <section id="produk" class="page-section active">
+            <h3>📦 Manajemen Produk</h3>
+            <div class="form">
+                <label>Nama Produk</label>
+                <input type="text" id="namaProduk" placeholder="Contoh: Parfum Scarlett">
+                
+                <label>Harga Jual (Rp)</label>
+                <input type="number" id="hargaProduk" placeholder="Contoh: 25000">
+
+                <!-- Hidden input untuk menyimpan Base64 foto -->
+                <input type="hidden" id="fotoProduk">
+                
+                <button type="button" onclick="ambilFoto()" style="background: #2196F3; color: white; margin-bottom: 10px;">
+                    📷 Pilih Foto dari Galeri
+                </button>
+
+                <div style="text-align: center;">
+                    <img id="previewFoto" src="" style="display:none; margin: 10px auto; width: 120px; height: 120px; border-radius: 12px; object-fit: cover; border: 2px solid #ddd;">
+                </div>
+
+                <button type="button" id="btnSimpan" onclick="simpanProduk()" style="background: #4CAF50; color: white;">
+                    Simpan Produk
+                </button>
+            </div>
+
+            <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ddd;">
+            <div id="produkList" class="produk-grid">
+                <!-- Produk akan muncul di sini via script.js -->
+            </div>
+        </section>
+
+
+        <!-- HALAMAN 2: TRANSAKSI / KASIR -->
+        <section id="transaksi" class="page-section">
+            <h3>🛒 Kasir</h3>
+            <div id="produkTransaksi" class="produk-grid">
+                <!-- List produk untuk dibeli muncul di sini -->
+            </div>
+
+            <div class="cart-section">
+                <h3>🧺 Keranjang</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Qty</th>
+                                <th>Subtotal</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="keranjang">
+                            <!-- Item keranjang muncul di sini -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pembayaran">
+                    <h4>Total: <span id="total">0</span></h4>
+                    
+                    <label>Uang Bayar (Rp)</label>
+                    <input type="number" id="bayar" placeholder="Masukkan jumlah uang" oninput="hitungKembalian()">
+                    
+                    <h4>Kembali: <span id="kembalian" class="text-danger">0</span></h4>
+                    
+                    <button onclick="checkout()" class="bg-success" style="padding: 15px; font-size: 1.1rem; margin-top: 15px;">
+                        ✅ SELESAI & CETAK STRUK
+                    </button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- HALAMAN 3: RIWAYAT -->
+        <section id="riwayat" class="page-section">
+            <h3>📜 Riwayat Transaksi</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Waktu</th>
+                            <th>Total</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="riwayatList">
+                        <!-- Data riwayat muncul di sini -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
 </div>
 
-<!-- HUBUNGKAN KE FILE JS EKSTERNAL ANDA -->
+<!-- FILE JAVASCRIPT -->
 <script src="script.js"></script>
 
 <script>
-/* ================= UI NAVIGATION ================= */
-// Fungsi showPage sudah ada di script.js Anda, pastikan namanya sinkron.
-// Jika di script.js belum ada fungsi toggleMenu, pakai yang ini:
-function toggleMenu(){
-  document.getElementById("menuList").classList.toggle("show");
-}
+    /* 1. Navigasi Sidebar Mobile */
+    function toggleMenu() {
+        document.getElementById("menuList").classList.toggle("show");
+    }
 
-function closeMenu(){
-  document.getElementById("menuList").classList.remove("show");
-}
+    function closeMenu() {
+        document.getElementById("menuList").classList.remove("show");
+    }
 
-/* ================= FLUTTER BRIDGE ================= */
-// SINKRONKAN NAMA CHANNEL DENGAN FLUTTER: 'ImageChannel'
+    /* 2. Bridge ke Flutter: Ambil Foto */
+    function ambilFoto() {
+        if (window.ImageChannel) {
+            window.ImageChannel.postMessage("pick");
+        } else {
+            Swal.fire({
+                icon: 'info',
+                title: 'Aplikasi Mobile',
+                text: 'Fitur galeri hanya tersedia saat dibuka di aplikasi HP.',
+                confirmButtonColor: '#ff5722'
+            });
+        }
+    }
 
-function ambilFoto() {
-  // Cek ImageChannel (disesuaikan dengan WebViewController di Flutter)
-  if (window.ImageChannel) {
-    console.log("Memanggil Galeri HP via Flutter...");
-    window.ImageChannel.postMessage("pick");
-  } else {
-    alert("Fitur Galeri hanya bisa dibuka melalui Aplikasi HP");
-    console.error("ImageChannel tidak ditemukan");
-  }
-}
+    /* 3. Bridge dari Flutter: Set Foto (Wajib Global) */
+    window.setFoto = function(base64) {
+        const input = document.getElementById("fotoProduk");
+        const preview = document.getElementById("previewFoto");
 
-// Fungsi ini akan dipanggil otomatis oleh Flutter lewat _controller.runJavaScript
-window.setFoto = function(base64) {
-  console.log("Foto diterima!");
-  const input = document.getElementById("fotoProduk");
-  const preview = document.getElementById("previewFoto");
-
-  if (input && preview) {
-    input.value = base64;
-    preview.src = base64;
-    preview.style.display = "block";
-  }
-}
+        if (input && preview) {
+            input.value = base64;
+            preview.src = base64;
+            preview.style.display = "block";
+            
+            // Notifikasi toast kecil
+            Swal.fire({
+                toast: true,
+                position: 'top',
+                icon: 'success',
+                title: 'Foto berhasil dimuat',
+                showConfirmButton: false,
+                timer: 1500
+            });
+        }
+    }
 </script>
 
 </body>
