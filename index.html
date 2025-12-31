@@ -36,8 +36,12 @@
     <input id="hargaProduk" type="number" placeholder="Harga">
 
     <!-- ✅ FOTO DARI FLUTTER -->
-    <button onclick="ambilFoto()">📷 Pilih Foto Produk</button>
-    <img id="preview" style="max-width:120px;display:none">
+<input type="hidden" id="fotoProduk">
+
+<button onclick="ambilFoto()">📷 Pilih Foto Produk</button>
+
+<img id="previewFoto" style="display:none;max-width:120px">
+
 
 
     <!-- PREVIEW FOTO -->
@@ -162,4 +166,5 @@ function pilihFoto() {
 
 </body>
 </html>
+
 
