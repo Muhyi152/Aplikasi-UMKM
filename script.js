@@ -1,7 +1,7 @@
 // ================== DOM ELEMENTS ==================
 const namaProduk = document.getElementById("namaProduk");
 const hargaProduk = document.getElementById("hargaProduk");
-const fotoProduk = document.getElementById("fotoProduk"); // hidden base64
+const fotoProduk = document.getElementById("fotoProduk"); // hidden input base64
 const btnSimpan = document.getElementById("btnSimpan");
 
 const produkList = document.getElementById("produkList");
@@ -14,6 +14,7 @@ const bayar = document.getElementById("bayar");
 const kembalian = document.getElementById("kembalian");
 
 const riwayatList = document.getElementById("riwayatList");
+const previewFoto = document.getElementById("previewFoto");
 
 // ================== DATA ==================
 let produk = JSON.parse(localStorage.getItem("produk")) || [];
@@ -26,6 +27,22 @@ let totalBayar = 0;
 // ================== HELPER ==================
 function formatRupiah(angka = 0) {
   return Number(angka).toLocaleString("id-ID");
+}
+
+// ================== FOTO (FLUTTER) ==================
+function ambilFoto() {
+  if (window.ImageChannel) {
+    window.ImageChannel.postMessage("pick");
+  } else {
+    alert("Image picker belum siap");
+  }
+}
+
+// Dipanggil oleh Flutter
+function setFoto(base64) {
+  fotoProduk.value = base64;
+  previewFoto.src = base64;
+  previewFoto.style.display = "block";
 }
 
 // ================== PRODUK ==================
@@ -78,8 +95,8 @@ function editProduk(i) {
   hargaProduk.value = produk[i].harga;
   fotoProduk.value = produk[i].foto;
 
-  document.getElementById("previewFoto").src = produk[i].foto;
-  document.getElementById("previewFoto").style.display = "block";
+  previewFoto.src = produk[i].foto;
+  previewFoto.style.display = "block";
 
   btnSimpan.innerText = "Update Produk";
 }
@@ -98,7 +115,7 @@ function resetForm() {
   fotoProduk.value = "";
   editIndex = null;
 
-  document.getElementById("previewFoto").style.display = "none";
+  previewFoto.style.display = "none";
   btnSimpan.innerText = "Tambah Produk";
 }
 
