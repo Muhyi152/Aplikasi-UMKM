@@ -1,33 +1,46 @@
-/* ================= RESET ================= */
+/* ================= RESET & BASE ================= */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  -webkit-tap-highlight-color: transparent; /* Hilangkan highlight biru di HP */
 }
 
 body {
-  font-family: "Segoe UI", Arial, sans-serif;
-  background: #f4f6f8;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background: #f0f2f5;
   color: #333;
+  line-height: 1.6;
 }
 
 /* ================= LAYOUT ================= */
 .app {
   display: flex;
   min-height: 100vh;
+  flex-direction: column; /* Default Mobile */
 }
 
-.content {
-  flex: 1;
-  padding: 16px;
+/* Desktop View */
+@media (min-width: 769px) {
+  .app {
+    flex-direction: row;
+  }
+  .sidebar {
+    width: 260px;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+  }
+  .menu-toggle { display: none; }
 }
 
-/* ================= SIDEBAR ================= */
+/* ================= SIDEBAR / HEADER ================= */
 .sidebar {
-  width: 220px;
-  background: linear-gradient(180deg, #ff5722, #ff7043);
+  background: linear-gradient(135deg, #ff5722 0%, #f44336 100%);
   color: white;
-  padding: 16px;
+  padding: 15px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  z-index: 1000;
 }
 
 .sidebar-header {
@@ -37,474 +50,250 @@ body {
 }
 
 .sidebar h2 {
-  font-size: 20px;
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: 1px;
 }
 
 .sidebar ul {
   list-style: none;
-  margin-top: 14px;
+  margin-top: 15px;
+  display: none; /* Hidden on mobile by default */
 }
 
-.sidebar li {
-  padding: 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.sidebar li:hover {
-  background: rgba(255,255,255,0.25);
-}
-
-/* ================= HAMBURGER ================= */
-.menu-toggle {
-  display: none;
-  font-size: 22px;
-  background: rgba(255,255,255,0.2);
-  border: none;
-  color: white;
-  padding: 6px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-/* ================= PAGE ================= */
-.page {
-  display: none;
-}
-
-.page.active {
+.sidebar ul.show {
   display: block;
 }
 
-/* ================= FORM ================= */
-.form {
-  display: grid;
-  grid-template-columns: 2fr 1fr 2fr auto;
+.sidebar li {
+  padding: 12px 15px;
+  margin-bottom: 5px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
   gap: 10px;
-  margin: 15px 0 20px;
 }
 
-.form input,
-.form button {
-  padding: 10px;
-  border-radius: 6px;
+.sidebar li:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+/* ================= CONTENT AREA ================= */
+.content {
+  flex: 1;
+  padding: 15px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.page-section {
+  display: none; /* Hidden by default */
+  animation: fadeIn 0.4s ease;
+}
+
+.page-section.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+h3 {
+  margin-bottom: 20px;
+  font-size: 1.4rem;
+  color: #d84315;
+  border-left: 4px solid #ff5722;
+  padding-left: 10px;
+}
+
+/* ================= FORM INPUT ================= */
+.form {
+  background: white;
+  padding: 20px;
+  border-radius: 15px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  margin-bottom: 25px;
 }
 
 .form input {
-  border: 1px solid #ccc;
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 12px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 16px; /* Mencegah auto-zoom di iPhone */
+  outline: none;
+  transition: border 0.3s;
+}
+
+.form input:focus {
+  border-color: #ff5722;
 }
 
 .form button {
-  background: #ff5722;
-  color: white;
+  width: 100%;
+  padding: 12px;
   border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  font-size: 16px;
   cursor: pointer;
+  transition: 0.3s;
 }
 
 /* ================= PRODUK GRID ================= */
 .produk-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(2, 1fr); /* 2 Kolom di HP */
+  gap: 12px;
+}
+
+@media (min-width: 481px) {
+  .produk-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
 }
 
 /* ================= PRODUK CARD ================= */
 .produk-card {
   background: white;
-  border-radius: 14px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  border-radius: 15px;
   overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s;
 }
+
+.produk-card:active { transform: scale(0.97); }
 
 .produk-card img {
   width: 100%;
-  height: 140px;
+  height: 120px;
   object-fit: cover;
 }
 
+.produk-card .info {
+  padding: 10px;
+  flex-grow: 1;
+}
+
 .produk-card h4 {
-  margin: 10px;
-  font-size: 15px;
+  font-size: 0.95rem;
+  margin-bottom: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .produk-card p {
-  margin: 0 10px;
-  font-weight: bold;
   color: #2e7d32;
+  font-weight: 800;
+  font-size: 0.9rem;
 }
 
-/* ================= AKSI EDIT & HAPUS ================= */
-.produk-action {
-  display: flex;
-  gap: 8px;
-  padding: 10px;
-}
-
-.btn-edit {
-  flex: 1;
-  background: #ff9800;
-  color: white;
-  padding: 8px;
-  border-radius: 6px;
-}
-
-.btn-hapus {
-  flex: 1;
-  background: #e53935;
-  color: white;
-  padding: 8px;
-  border-radius: 6px;
-}
-
-/* ================= BELI ================= */
+/* Tombol Beli di Card */
 .btn-beli {
-  width: calc(100% - 20px);
-  margin: 10px;
-  padding: 10px;
-  background: #2196f3;
+  background: #4caf50;
   color: white;
-  border-radius: 8px;
+  border: none;
+  padding: 8px;
+  width: 100%;
   font-weight: bold;
+  cursor: pointer;
 }
 
-/* ================= TABLE ================= */
+/* ================= KERANJANG & TABEL ================= */
+.cart-section {
+  background: white;
+  margin-top: 30px;
+  border-radius: 15px;
+  padding: 15px;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+}
+
 .table-wrapper {
-  width: 100%;
   overflow-x: auto;
   margin-top: 10px;
 }
 
 table {
   width: 100%;
-  min-width: 480px;
   border-collapse: collapse;
-  background: white;
+  font-size: 0.85rem;
 }
 
 th {
-  background: #ff5722;
-  color: white;
-  padding: 10px;
+  background: #f8f9fa;
+  padding: 12px 8px;
+  text-align: left;
+  border-bottom: 2px solid #eee;
 }
 
 td {
-  padding: 10px;
-  text-align: center;
-  border-bottom: 1px solid #eee;
+  padding: 12px 8px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
-/* ================= QTY ================= */
-.qty-control {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-}
-
-.qty-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  color: white;
-  font-weight: bold;
-}
-
-.qty-btn.plus {
-  background: #4caf50;
-}
-
-.qty-btn.minus {
-  background: #f44336;
-}
-
-/* ================= HAPUS CART ================= */
-.btn-hapus-cart {
-  background: #e53935;
-  color: white;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-}
-
-/* ================= BAYAR ================= */
-.bayar-box {
-  background: white;
-  padding: 14px;
+/* ================= PEMBAYARAN BOX ================= */
+.pembayaran {
+  background: #fff3e0;
   border-radius: 12px;
+  padding: 15px;
   margin-top: 15px;
 }
 
-.bayar-box input {
-  width: 100%;
-  padding: 10px;
+.pembayaran h4 {
+  display: flex;
+  justify-content: space-between;
   margin-bottom: 10px;
 }
 
-.bayar-box button {
-  width: 100%;
-  background: #4caf50;
-  color: white;
-  padding: 10px;
-  font-size: 15px;
+#total {
+  font-size: 1.4rem;
+  color: #e64a19;
 }
 
-/* ================= RESET BUTTON ================= */
-.btn-reset {
-  width: 100%;
-  background: #e53935;
-  color: white;
-  padding: 10px;
-  border-radius: 8px;
-  margin: 15px 0;
-}
-
-/* ================= PENDAPATAN MOBILE ================= */
-.desktop-only { display: block; }
-.mobile-only { display: none; }
-
-.pendapatan-card {
-  background: #ff5722;
-  color: white;
-  padding: 14px;
-  border-radius: 10px;
-  display: flex;
-  justify-content: space-between;
-  margin: 12px 0;
-}
-
-/* ================= RESPONSIVE ================= */
-@media (max-width: 768px) {
-
-  .app {
-    flex-direction: column;
-  }
-
-  .sidebar {
-    width: 100%;
-  }
-
-  .menu-toggle {
-    display: block;
-  }
-
-  .sidebar ul {
-    display: none;
-    flex-direction: column;
-    background: rgba(255,255,255,0.15);
-    border-radius: 8px;
-    overflow: hidden;
-  }
-
-  .sidebar ul.show {
-    display: flex;
-  }
-
-  .sidebar li {
-    border-top: 1px solid rgba(255,255,255,0.3);
-    text-align: center;
-  }
-
-  .form {
-    grid-template-columns: 1fr;
-  }
-
-  .produk-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .desktop-only { display: none; }
-  .mobile-only { display: flex; }
-}
-
-@media (max-width: 480px) {
-  .produk-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ================= PRINT STRUK ================= */
-@media print {
-  body * {
-    visibility: hidden;
-  }
-
-  #print-area, #print-area * {
-    visibility: visible;
-  }
-
-  #print-area {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    font-size: 12px;
-  }
-}
-
-/* === ANIMASI BELI === */
-.btn-beli {
-  width: calc(100% - 20px);
-  margin: 10px;
-  padding: 10px;
-  background: #2196f3;
-  color: white;
-  border-radius: 8px;
-  border: none;
+#bayar {
+  border: 2px solid #ffccbc;
+  font-size: 1.2rem;
+  text-align: right;
   font-weight: bold;
-  cursor: pointer;
-  transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.2s;
 }
 
-.btn-beli:active {
-  transform: scale(0.95);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-  background: #1976d2;
-}
-
-/* efek flash saat masuk keranjang */
-.flash {
-  animation: flashAnim 0.3s ease;
-}
-
-@keyframes flashAnim {
-  0% { background: #e3f2fd; }
-  100% { background: white; }
-}
-
-/* === TABLE MOBILE === */
-.table-wrapper {
-  overflow-x: auto;
-  margin-top: 10px;
-}
-
-table {
-  width: 100%;
-  min-width: 520px;
-  border-collapse: collapse;
-  background: white;
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-th {
-  background: #ff5722;
-  color: white;
-  padding: 10px;
-  font-size: 14px;
-}
-
-td {
-  padding: 8px;
-  text-align: center;
-  font-size: 14px;
-}
-
-/* qty */
-.qty-control {
+/* ================= BUTTONS ================= */
+button {
+  transition: all 0.2s;
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 8px;
 }
 
-.qty-btn {
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
-  border: none;
+button:active { transform: scale(0.95); opacity: 0.8; }
+
+.menu-toggle {
+  background: rgba(255,255,255,0.2);
   color: white;
-  font-weight: bold;
+  padding: 8px 12px;
+  border-radius: 8px;
 }
 
-.plus { background: #4caf50; }
-.minus { background: #f44336; }
+/* ================= UTILS ================= */
+.text-danger { color: #d32f2f; }
+.bg-success { background: #4caf50 !important; color: white; }
 
-/* hapus cart */
-.btn-hapus-cart {
-  background: #e53935;
-  color: white;
-  border: none;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-}
-
-/* ================= ANIMASI KLIK BUTTON ================= */
-
-/* efek tap */
-button {
-  transition: 
-    transform 0.15s ease,
-    box-shadow 0.15s ease,
-    opacity 0.15s ease;
-}
-
-/* saat ditekan */
-button:active {
-  transform: scale(0.94);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2) inset;
-  opacity: 0.9;
-}
-
-/* ================= ANIMASI KHUSUS EDIT ================= */
-.btn-edit {
-  background: #ff9800;
-}
-
-.btn-edit:active {
-  background: #fb8c00;
-}
-
-/* ================= ANIMASI KHUSUS HAPUS ================= */
-.btn-hapus {
-  background: #e53935;
-}
-
-.btn-hapus:active {
-  background: #c62828;
-}
-
-/* ================= SHAKE ANIMATION (HAPUS) ================= */
-@keyframes shake {
-  0% { transform: translateX(0); }
-  25% { transform: translateX(-4px); }
-  50% { transform: translateX(4px); }
-  75% { transform: translateX(-4px); }
-  100% { transform: translateX(0); }
-}
-
-.btn-hapus.shake {
-  animation: shake 0.35s;
-}
-
-/* Aturan khusus saat mencetak (Print Mode) */
+/* PRINT MODE */
 @media print {
-    /* Sembunyikan seluruh isi aplikasi agar tidak ikut tercetak */
-    body * {
-        visibility: hidden;
-    }
-    
-    /* Tampilkan HANYA area struk */
-    #print-area, #print-area * {
-        visibility: visible;
-    }
-    
-    /* Atur agar struk muncul di paling atas kertas */
-    #print-area {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        display: block !important; /* Paksa muncul */
-    }
-
-    /* Hilangkan header/footer bawaan browser (opsional) */
-    @page {
-        margin: 0;
-    }
-    
-}
-#keranjangSection {
-    scroll-margin-top: 20px; /* Memberi jarak 20px dari atas layar saat discroll */
-    margin-top: 30px;
+  .sidebar, .form, .btn-beli, .menu-toggle, .cart-section button {
+    display: none !important;
+  }
+  body { background: white; }
+  .content { padding: 0; }
+  .page-section { display: block !important; }
 }
