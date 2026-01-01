@@ -4,21 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Kasir UMKM PRO</title>
+    
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
     <link rel="stylesheet" href="style.css">
-    <style>
-        .page-section { display: none; }
-        .page-section.active { display: block; animation: fadeIn 0.4s ease; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-    </style>
 </head>
 <body>
 
 <div class="app">
+    <!-- SIDEBAR -->
     <aside class="sidebar">
         <div class="sidebar-header">
             <h2>🏪 KASIR PRO</h2>
@@ -31,7 +29,9 @@
         </ul>
     </aside>
 
+    <!-- MAIN CONTENT -->
     <main class="content">
+
         <!-- HALAMAN 1: MANAJEMEN PRODUK -->
         <section id="produk" class="page-section active">
             <h3>📦 Manajemen Produk</h3>
@@ -44,7 +44,7 @@
 
                 <input type="hidden" id="fotoProduk">
                 
-                <button type="button" onclick="ambilFoto()" style="background: #2196F3; color: white; margin-bottom: 10px; border:none; padding:10px; border-radius:8px; width:100%; cursor:pointer;">
+                <button type="button" onclick="ambilFoto()" style="background: #2196F3; color: white; margin-bottom: 12px; width: 100%; padding: 12px; border-radius: 10px; border:none; cursor:pointer; font-weight:600;">
                     📷 Pilih Foto dari Galeri
                 </button>
 
@@ -52,60 +52,105 @@
                     <img id="previewFoto" src="" style="display:none; margin: 10px auto; width: 120px; height: 120px; border-radius: 12px; object-fit: cover; border: 2px solid #ddd;">
                 </div>
 
-                <button type="button" id="btnSimpan" onclick="simpanProduk()" style="background: #4CAF50; color: white; border:none; padding:12px; border-radius:8px; width:100%; font-weight:bold; cursor:pointer;">
+                <button type="button" id="btnSimpan" onclick="simpanProduk()" style="background: #4CAF50; color: white; width: 100%; padding: 14px; border-radius: 10px; border:none; cursor:pointer; font-weight:bold; font-size:1rem;">
                     Simpan Produk
                 </button>
             </div>
 
-            <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ddd;">
-            <div id="produkList" class="produk-grid"></div>
+            <div id="produkList" class="produk-grid">
+                <!-- Produk Load di Sini -->
+            </div>
         </section>
 
-        <!-- HALAMAN 2: TRANSAKSI -->
+
+        <!-- HALAMAN 2: TRANSAKSI (KASIR) -->
         <section id="transaksi" class="page-section">
             <h3>🛒 Kasir</h3>
-            <div id="produkTransaksi" class="produk-grid"></div>
+            <div id="produkTransaksi" class="produk-grid">
+                <!-- Grid Produk Beli -->
+            </div>
+
             <div class="cart-section">
-                <h3>🧺 Keranjang</h3>
+                <h3>🧺 Keranjang Belanja</h3>
                 <div class="table-wrapper">
                     <table>
                         <thead>
-                            <tr><th>Item</th><th>Qty</th><th>Subtotal</th><th></th></tr>
+                            <tr>
+                                <th>Item</th>
+                                <th>Qty</th>
+                                <th>Subtotal</th>
+                                <th></th>
+                            </tr>
                         </thead>
                         <tbody id="keranjang"></tbody>
                     </table>
                 </div>
+
                 <div class="pembayaran">
-                    <h4>Total: Rp <span id="total">0</span></h4>
-                    <label>Uang Bayar (Rp)</label>
-                    <input type="number" id="bayar" placeholder="Masukkan jumlah uang">
-                    <h4>Kembali: Rp <span id="kembalian" class="text-danger">0</span></h4>
-                    <button onclick="checkout()" class="bg-success" style="padding: 15px; font-size: 1.1rem; margin-top: 15px; width:100%; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <span>Total Bayar:</span>
+                        <h2 style="color:#e64a19;">Rp <span id="total">0</span></h2>
+                    </div>
+                    
+                    <label>Uang Tunai (Rp)</label>
+                    <input type="number" id="bayar" placeholder="0" style="width:100%; padding:15px; font-size:1.4rem; border-radius:12px; border:2px solid #ffccbc; text-align:right; font-weight:bold; margin-top:5px;">
+                    
+                    <div style="display:flex; justify-content:space-between; margin-top:10px;">
+                        <span>Kembalian:</span>
+                        <span id="kembalian" class="text-danger" style="font-size:1.2rem;">0</span>
+                    </div>
+                    
+                    <button onclick="checkout()" class="bg-success" style="width:100%; padding:18px; font-size:1.1rem; margin-top:20px; border-radius:12px; border:none; font-weight:bold; cursor:pointer;">
                         ✅ SELESAI & CETAK STRUK
                     </button>
                 </div>
             </div>
         </section>
 
+
         <!-- HALAMAN 3: RIWAYAT -->
         <section id="riwayat" class="page-section">
+            <!-- Banner Pendapatan -->
+            <div class="income-banner">
+                <div class="income-info">
+                    <p>💰 Pendapatan Hari Ini</p>
+                    <h2 id="totalHariIni">Rp 0</h2>
+                </div>
+                <button class="btn-reset-day" onclick="resetPendapatanHariIni()">🔄 Reset Hari</button>
+            </div>
+
             <h3>📜 Riwayat Transaksi</h3>
             <div class="table-wrapper">
                 <table>
                     <thead>
-                        <tr><th>Waktu</th><th>Total</th><th>Aksi</th></tr>
+                        <tr>
+                            <th>Waktu</th>
+                            <th>Total</th>
+                            <th style="text-align:center;">Aksi</th>
+                        </tr>
                     </thead>
-                    <tbody id="riwayatList"></tbody>
+                    <tbody id="riwayatList">
+                        <!-- Riwayat Load di Sini -->
+                    </tbody>
                 </table>
             </div>
         </section>
+
     </main>
 </div>
 
+<!-- FILE JS -->
 <script src="script.js"></script>
+
 <script>
-    function toggleMenu() { document.getElementById("menuList").classList.toggle("show"); }
-    function closeMenu() { document.getElementById("menuList").classList.remove("show"); }
+    function toggleMenu() {
+        const menu = document.getElementById("menuList");
+        menu.classList.toggle("show");
+    }
+    function closeMenu() {
+        document.getElementById("menuList").classList.remove("show");
+    }
 </script>
+
 </body>
 </html>
