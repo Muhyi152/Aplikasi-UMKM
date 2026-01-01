@@ -11,6 +11,7 @@ const bayarInput = document.getElementById("bayar");
 const kembalian = document.getElementById("kembalian");
 const riwayatList = document.getElementById("riwayatList");
 const previewFoto = document.getElementById("previewFoto");
+const totalHariIniBanner = document.getElementById("totalHariIni");
 
 // ================== DATA INITIALIZATION ==================
 let produk = JSON.parse(localStorage.getItem("produk")) || [];
@@ -18,6 +19,7 @@ let editIndex = null;
 let keranjangData = [];
 let totalBayar = 0;
 
+// ================== SWEETALERT CONFIG ==================
 const Toast = Swal.mixin({
     toast: true,
     position: 'top',
@@ -26,6 +28,7 @@ const Toast = Swal.mixin({
     timerProgressBar: true,
 });
 
+// ================== HELPERS ==================
 function formatRupiah(angka = 0) {
     return Number(angka).toLocaleString("id-ID");
 }
@@ -40,6 +43,8 @@ function showPage(pageId) {
         activePage.classList.add('active');
         activePage.style.display = 'block';
     }
+    
+    // Auto-refresh data saat pindah halaman
     if (pageId === 'transaksi') renderProdukTransaksi();
     if (pageId === 'produk') renderProduk();
     if (pageId === 'riwayat') renderRiwayat();
@@ -59,7 +64,7 @@ window.setFoto = function(base64) {
     const img = new Image();
     img.onload = function() {
         const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 400; // Ukuran diperkecil agar muat banyak
+        const MAX_WIDTH = 400; // Ukuran diperkecil agar localStorage tidak cepat penuh
         let width = img.width;
         let height = img.height;
 
@@ -72,7 +77,7 @@ window.setFoto = function(base64) {
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
 
-        // Kompresi ke JPEG kualitas 0.6
+        // Kompresi ke JPEG kualitas 0.6 (60%)
         const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
         fotoProduk.value = compressedBase64;
         previewFoto.src = compressedBase64;
@@ -101,7 +106,7 @@ function simpanProduk() {
         Swal.fire({
             icon: 'success',
             title: 'Berhasil Update!',
-            text: 'Data produk telah diperbarui.',
+            text: `Data "${nama}" telah diperbarui.`,
             timer: 1500,
             showConfirmButton: false
         });
@@ -179,10 +184,10 @@ function resetForm() {
     editIndex = null;
 }
 
-// ================== KASIR & RIWAYAT ==================
+// ================== KASIR (TRANSAKSI) ==================
 function renderProdukTransaksi() {
     if (!produkTransaksi) return;
-    produkTransaksi.innerHTML = produk.length === 0 ? "<p style='text-align:center; width:100%;'>Belum ada produk.</p>" : "";
+    produkTransaksi.innerHTML = produk.length === 0 ? "<p style='text-align:center; width:100%; grid-column: 1/-1;'>Belum ada produk.</p>" : "";
     produk.forEach((p, i) => {
         produkTransaksi.innerHTML += `
             <div class="produk-card">
@@ -191,7 +196,7 @@ function renderProdukTransaksi() {
                     <h4>${p.nama}</h4>
                     <p>Rp ${formatRupiah(p.harga)}</p>
                 </div>
-                <button onclick="beliProduk(${i})" style="width:100%; padding:10px; background:#4CAF50; color:white; border:none; cursor:pointer;">🛒 Tambah</button>
+                <button onclick="beliProduk(${i})" style="width:100%; padding:10px; background:#4CAF50; color:white; border:none; cursor:pointer; font-weight:bold;">🛒 Tambah</button>
             </div>`;
     });
 }
@@ -199,61 +204,179 @@ function renderProdukTransaksi() {
 function beliProduk(i) {
     const p = produk[i];
     const item = keranjangData.find(x => x.nama === p.nama);
-    if (item) { item.qty++; item.subtotal = item.qty * item.harga; } 
-    else { keranjangData.push({ nama: p.nama, harga: p.harga, qty: 1, subtotal: p.harga }); }
+    if (item) { 
+        item.qty++; 
+        item.subtotal = item.qty * item.harga; 
+    } else { 
+        keranjangData.push({ nama: p.nama, harga: p.harga, qty: 1, subtotal: p.harga }); 
+    }
     Toast.fire({ icon: 'success', title: p.nama + ' ditambah' });
     renderKeranjang();
 }
 
 function renderKeranjang() {
-    keranjang.innerHTML = ""; totalBayar = 0;
+    keranjang.innerHTML = ""; 
+    totalBayar = 0;
     keranjangData.forEach((item, i) => {
         totalBayar += item.subtotal;
-        keranjang.innerHTML += `<tr><td>${item.nama}</td><td>${item.qty}x</td><td>${formatRupiah(item.subtotal)}</td><td><button onclick="hapusItem(${i})" style="color:red; background:none; border:none;">✖</button></td></tr>`;
+        keranjang.innerHTML += `
+            <tr>
+                <td>${item.nama}</td>
+                <td>${item.qty}x</td>
+                <td>${formatRupiah(item.subtotal)}</td>
+                <td><button onclick="hapusItem(${i})" style="color:red; background:none; border:none; font-size:1.2rem; cursor:pointer;">✖</button></td>
+            </tr>`;
     });
     total.innerText = formatRupiah(totalBayar);
     hitungKembalian();
 }
 
-function hapusItem(i) { keranjangData.splice(i, 1); renderKeranjang(); }
+function hapusItem(i) { 
+    keranjangData.splice(i, 1); 
+    renderKeranjang(); 
+}
 
 function hitungKembalian() {
     const bayarVal = Number(bayarInput.value) || 0;
     const sisa = bayarVal - totalBayar;
     kembalian.innerText = formatRupiah(sisa > 0 ? sisa : 0);
+    if (sisa < 0) kembalian.classList.add('text-danger');
+    else kembalian.classList.remove('text-danger');
 }
 bayarInput.addEventListener("input", hitungKembalian);
 
 function checkout() {
     const bayarVal = Number(bayarInput.value) || 0;
-    if (keranjangData.length === 0 || bayarVal < totalBayar) {
-        Swal.fire('Gagal', 'Keranjang kosong atau uang kurang!', 'error'); return;
+    if (keranjangData.length === 0) {
+        Swal.fire('Gagal', 'Keranjang masih kosong!', 'error'); return;
     }
-    const trx = { id: "TRX-"+Date.now(), tanggal: new Date().toLocaleString('id-ID'), items: [...keranjangData], total: totalBayar, bayar: bayarVal, kembali: bayarVal - totalBayar };
+    if (bayarVal < totalBayar) {
+        Swal.fire('Uang Kurang', 'Jumlah bayar tidak cukup!', 'warning'); return;
+    }
+
+    const trx = { 
+        id: "TRX-" + Date.now(), 
+        tanggal: new Date().toLocaleString('id-ID'), 
+        items: [...keranjangData], 
+        total: totalBayar, 
+        bayar: bayarVal, 
+        kembali: bayarVal - totalBayar 
+    };
+
     let riwayat = JSON.parse(localStorage.getItem("riwayat")) || [];
     riwayat.push(trx);
     localStorage.setItem("riwayat", JSON.stringify(riwayat));
-    if (window.PrintChannel) window.PrintChannel.postMessage(JSON.stringify(trx));
+
+    // Kirim ke Printer Flutter
+    if (window.PrintChannel) {
+        window.PrintChannel.postMessage(JSON.stringify(trx));
+    }
     
-    Swal.fire('Berhasil!', 'Transaksi Selesai', 'success').then(() => {
-        keranjangData = []; bayarInput.value = ""; renderKeranjang(); showPage('riwayat');
+    Swal.fire('Berhasil!', 'Transaksi Selesai & Struk Dicetak', 'success').then(() => {
+        keranjangData = []; 
+        bayarInput.value = ""; 
+        renderKeranjang(); 
+        showPage('riwayat');
     });
 }
 
+// ================== RIWAYAT & PENDAPATAN ==================
 function renderRiwayat() {
+    if (!riwayatList) return;
     const data = JSON.parse(localStorage.getItem("riwayat")) || [];
-    riwayatList.innerHTML = data.length === 0 ? "<tr><td colspan='3'>Kosong</td></tr>" : "";
-    data.reverse().forEach((item, i) => {
-        riwayatList.innerHTML += `<tr><td>${item.tanggal}</td><td>Rp ${formatRupiah(item.total)}</td><td><button onclick="hapusRiwayat(${data.length-1-i})" style="background:red; color:white; border:none; padding:5px 10px; border-radius:5px;">Hapus</button></td></tr>`;
+    riwayatList.innerHTML = "";
+    
+    const hariIni = new Date().toLocaleDateString('id-ID');
+    let pendapatanHariIni = 0;
+
+    if (data.length === 0) {
+        riwayatList.innerHTML = "<tr><td colspan='3' style='text-align:center; padding:20px;'>Belum ada transaksi.</td></tr>";
+        totalHariIniBanner.innerText = "Rp 0";
+        return;
+    }
+
+    // Urutkan dari yang terbaru (reverse)
+    const reversedData = [...data].reverse();
+
+    reversedData.forEach((item, index) => {
+        const originalIndex = data.length - 1 - index;
+
+        // Hitung pendapatan hari ini
+        if (item.tanggal.includes(hariIni)) {
+            pendapatanHariIni += item.total;
+        }
+
+        riwayatList.innerHTML += `
+            <tr>
+                <td style="font-size:0.8rem;">${item.tanggal}</td>
+                <td style="font-weight:bold;">Rp ${formatRupiah(item.total)}</td>
+                <td style="text-align:center;">
+                    <div style="display:flex; gap:5px; justify-content:center;">
+                        <button onclick="reprintStruk(${originalIndex})" style="background:#2196F3; color:white; border:none; padding:8px; border-radius:6px; cursor:pointer;">🖨️</button>
+                        <button onclick="hapusRiwayat(${originalIndex})" style="background:#f44336; color:white; border:none; padding:8px; border-radius:6px; cursor:pointer;">🗑️</button>
+                    </div>
+                </td>
+            </tr>`;
     });
+
+    totalHariIniBanner.innerText = "Rp " + formatRupiah(pendapatanHariIni);
+}
+
+function reprintStruk(index) {
+    const data = JSON.parse(localStorage.getItem("riwayat")) || [];
+    const trx = data[index];
+    if (window.PrintChannel && trx) {
+        window.PrintChannel.postMessage(JSON.stringify(trx));
+        Toast.fire({ icon: 'success', title: 'Mencetak ulang struk...' });
+    } else {
+        Swal.fire('Info', 'Fitur cetak hanya tersedia di aplikasi.', 'info');
+    }
 }
 
 function hapusRiwayat(index) {
-    let riwayat = JSON.parse(localStorage.getItem("riwayat")) || [];
-    riwayat.splice(index, 1);
-    localStorage.setItem("riwayat", JSON.stringify(riwayat));
-    renderRiwayat();
-    Toast.fire({ icon: 'success', title: 'Riwayat dihapus' });
+    Swal.fire({
+        title: 'Hapus Riwayat?',
+        text: "Data transaksi ini akan dihapus permanen.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#f44336',
+        confirmButtonText: 'Ya, Hapus!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            let riwayat = JSON.parse(localStorage.getItem("riwayat")) || [];
+            riwayat.splice(index, 1);
+            localStorage.setItem("riwayat", JSON.stringify(riwayat));
+            renderRiwayat();
+            Toast.fire({ icon: 'success', title: 'Riwayat dihapus' });
+        }
+    });
 }
 
-document.addEventListener("DOMContentLoaded", () => { renderProduk(); showPage('produk'); });
+function resetPendapatanHariIni() {
+    Swal.fire({
+        title: 'Reset Hari Ini?',
+        text: "Semua riwayat tanggal hari ini akan dihapus!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        confirmButtonText: 'Ya, Reset!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            let dataRiwayat = JSON.parse(localStorage.getItem("riwayat")) || [];
+            const hariIni = new Date().toLocaleDateString('id-ID');
+            
+            // Filter: Hanya simpan yang bukan hari ini
+            const sisaData = dataRiwayat.filter(item => !item.tanggal.includes(hariIni));
+            
+            localStorage.setItem("riwayat", JSON.stringify(sisaData));
+            renderRiwayat();
+            Swal.fire('Berhasil', 'Data hari ini telah dibersihkan.', 'success');
+        }
+    });
+}
+
+// ================== INITIAL LOAD ==================
+document.addEventListener("DOMContentLoaded", () => { 
+    renderProduk(); 
+    showPage('produk'); 
+});
