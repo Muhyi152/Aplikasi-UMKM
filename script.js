@@ -14,12 +14,10 @@ const previewFoto = document.getElementById("previewFoto");
 
 // ================== DATA INITIALIZATION ==================
 let produk = JSON.parse(localStorage.getItem("produk")) || [];
-let riwayat = JSON.parse(localStorage.getItem("riwayat")) || [];
 let editIndex = null;
 let keranjangData = [];
 let totalBayar = 0;
 
-// ================== SWEETALERT MANTAP (TOAST) ==================
 const Toast = Swal.mixin({
     toast: true,
     position: 'top',
@@ -28,53 +26,61 @@ const Toast = Swal.mixin({
     timerProgressBar: true,
 });
 
-// ================== HELPER ==================
 function formatRupiah(angka = 0) {
     return Number(angka).toLocaleString("id-ID");
 }
 
 function showPage(pageId) {
     document.querySelectorAll('.page-section').forEach(section => {
-        section.style.display = 'none';
         section.classList.remove('active');
+        section.style.display = 'none';
     });
     const activePage = document.getElementById(pageId);
     if (activePage) {
-        activePage.style.display = 'block';
         activePage.classList.add('active');
+        activePage.style.display = 'block';
     }
     if (pageId === 'transaksi') renderProdukTransaksi();
     if (pageId === 'produk') renderProduk();
     if (pageId === 'riwayat') renderRiwayat();
-    
-    // Fungsi closeMenu diasumsikan ada di HTML untuk mobile sidebar
     if (typeof closeMenu === "function") closeMenu();
 }
 
-// ================== FOTO (FLUTTER BRIDGE) ==================
+// ================== FOTO DENGAN KOMPRESI (SOLUSI MEMORI) ==================
 function ambilFoto() {
     if (window.ImageChannel) {
         window.ImageChannel.postMessage("pick");
     } else {
-        Swal.fire({
-            icon: 'info',
-            title: 'Aplikasi Mobile',
-            text: 'Fitur galeri hanya tersedia di aplikasi Android/iOS.',
-            confirmButtonColor: '#ff5722'
-        });
+        Swal.fire('Info', 'Fitur galeri hanya tersedia di aplikasi HP.', 'info');
     }
 }
 
 window.setFoto = function(base64) {
-    if (fotoProduk) fotoProduk.value = base64;
-    if (previewFoto) {
-        previewFoto.src = base64;
+    const img = new Image();
+    img.onload = function() {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 400; // Ukuran diperkecil agar muat banyak
+        let width = img.width;
+        let height = img.height;
+
+        if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Kompresi ke JPEG kualitas 0.6
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
+        fotoProduk.value = compressedBase64;
+        previewFoto.src = compressedBase64;
         previewFoto.style.display = "block";
-    }
-    Toast.fire({
-        icon: 'success',
-        title: 'Foto berhasil dimuat'
-    });
+        
+        Toast.fire({ icon: 'success', title: 'Foto berhasil dimuat' });
+    };
+    img.src = base64;
 };
 
 // ================== MANAJEMEN PRODUK ==================
@@ -83,18 +89,26 @@ function simpanProduk() {
     const harga = parseInt(hargaProduk.value);
     const fotoBase64 = fotoProduk.value;
 
-    if (!nama || isNaN(harga) || harga <= 0 || !fotoBase64) {
+    if (!nama || !harga || !fotoBase64) {
         Swal.fire('Oops!', 'Nama, Harga, dan Foto wajib diisi!', 'warning');
         return;
     }
 
     if (editIndex !== null) {
+        // Logika UPDATE
         produk[editIndex] = { nama, harga, foto: fotoBase64 };
         editIndex = null;
-        Swal.fire('Berhasil!', 'Produk telah diperbarui.', 'success');
+        Swal.fire({
+            icon: 'success',
+            title: 'Berhasil Update!',
+            text: 'Data produk telah diperbarui.',
+            timer: 1500,
+            showConfirmButton: false
+        });
     } else {
+        // Logika TAMBAH BARU
         produk.push({ nama, harga, foto: fotoBase64 });
-        Toast.fire({ icon: 'success', title: 'Produk ditambahkan' });
+        Toast.fire({ icon: 'success', title: 'Produk berhasil ditambah' });
     }
 
     localStorage.setItem("produk", JSON.stringify(produk));
@@ -113,9 +127,9 @@ function renderProduk() {
                     <h4>${p.nama}</h4>
                     <p>Rp ${formatRupiah(p.harga)}</p>
                 </div>
-                <div class="produk-action" style="padding:10px; display:flex; gap:5px;">
-                    <button onclick="editProduk(${i})" style="background:#ff9800; flex:1; color:white; border:none; padding:8px; border-radius:8px;">Edit</button>
-                    <button onclick="hapusProduk(${i})" style="background:#f44336; flex:1; color:white; border:none; padding:8px; border-radius:8px;">Hapus</button>
+                <div style="padding:10px; display:flex; gap:5px;">
+                    <button onclick="editProduk(${i})" style="background:#ff9800; flex:1; color:white; border:none; padding:8px; border-radius:8px; cursor:pointer;">Edit</button>
+                    <button onclick="hapusProduk(${i})" style="background:#f44336; flex:1; color:white; border:none; padding:8px; border-radius:8px; cursor:pointer;">Hapus</button>
                 </div>
             </div>`;
     });
@@ -129,13 +143,16 @@ function editProduk(i) {
     previewFoto.src = produk[i].foto;
     previewFoto.style.display = "block";
     btnSimpan.innerText = "Update Produk";
+    btnSimpan.style.background = "#ff9800";
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    Toast.fire({ icon: 'info', title: 'Mode Edit: ' + produk[i].nama });
 }
 
 function hapusProduk(i) {
     Swal.fire({
         title: 'Hapus Produk?',
-        text: "Produk ini akan hilang dari daftar.",
+        text: `Produk "${produk[i].nama}" akan dihapus permanen.`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#f44336',
@@ -147,7 +164,7 @@ function hapusProduk(i) {
             produk.splice(i, 1);
             localStorage.setItem("produk", JSON.stringify(produk));
             renderProduk();
-            Toast.fire({ icon: 'success', title: 'Produk dihapus' });
+            Swal.fire('Terhapus!', 'Produk telah dihapus.', 'success');
         }
     });
 }
@@ -157,18 +174,15 @@ function resetForm() {
     hargaProduk.value = "";
     fotoProduk.value = "";
     previewFoto.style.display = "none";
-    btnSimpan.innerText = "Tambah Produk";
+    btnSimpan.innerText = "Simpan Produk";
+    btnSimpan.style.background = "#4CAF50";
     editIndex = null;
 }
 
-// ================== TRANSAKSI (KASIR) ==================
+// ================== KASIR & RIWAYAT ==================
 function renderProdukTransaksi() {
     if (!produkTransaksi) return;
-    produkTransaksi.innerHTML = "";
-    if (produk.length === 0) {
-        produkTransaksi.innerHTML = "<p style='grid-column: 1/-1; text-align:center;'>Belum ada produk.</p>";
-        return;
-    }
+    produkTransaksi.innerHTML = produk.length === 0 ? "<p style='text-align:center; width:100%;'>Belum ada produk.</p>" : "";
     produk.forEach((p, i) => {
         produkTransaksi.innerHTML += `
             <div class="produk-card">
@@ -177,7 +191,7 @@ function renderProdukTransaksi() {
                     <h4>${p.nama}</h4>
                     <p>Rp ${formatRupiah(p.harga)}</p>
                 </div>
-                <button class="btn-beli" onclick="beliProduk(${i})" style="border:none; cursor:pointer;">🛒 Beli</button>
+                <button onclick="beliProduk(${i})" style="width:100%; padding:10px; background:#4CAF50; color:white; border:none; cursor:pointer;">🛒 Tambah</button>
             </div>`;
     });
 }
@@ -185,163 +199,61 @@ function renderProdukTransaksi() {
 function beliProduk(i) {
     const p = produk[i];
     const item = keranjangData.find(x => x.nama === p.nama);
-    if (item) {
-        item.qty++;
-        item.subtotal = item.qty * item.harga;
-    } else {
-        keranjangData.push({ nama: p.nama, harga: p.harga, qty: 1, subtotal: p.harga });
-    }
-    Toast.fire({ icon: 'success', title: `${p.nama} masuk keranjang` });
+    if (item) { item.qty++; item.subtotal = item.qty * item.harga; } 
+    else { keranjangData.push({ nama: p.nama, harga: p.harga, qty: 1, subtotal: p.harga }); }
+    Toast.fire({ icon: 'success', title: p.nama + ' ditambah' });
     renderKeranjang();
 }
 
 function renderKeranjang() {
-    if (!keranjang) return;
-    keranjang.innerHTML = "";
-    totalBayar = 0;
+    keranjang.innerHTML = ""; totalBayar = 0;
     keranjangData.forEach((item, i) => {
         totalBayar += item.subtotal;
-        keranjang.innerHTML += `
-            <tr>
-                <td>${item.nama}</td>
-                <td>${item.qty}x</td>
-                <td>Rp ${formatRupiah(item.subtotal)}</td>
-                <td><button onclick="hapusItem(${i})" style="color:red; background:none; border:none; font-size:1.2rem; cursor:pointer;">✖</button></td>
-            </tr>`;
+        keranjang.innerHTML += `<tr><td>${item.nama}</td><td>${item.qty}x</td><td>${formatRupiah(item.subtotal)}</td><td><button onclick="hapusItem(${i})" style="color:red; background:none; border:none;">✖</button></td></tr>`;
     });
     total.innerText = formatRupiah(totalBayar);
     hitungKembalian();
 }
 
-function hapusItem(i) {
-    keranjangData.splice(i, 1);
-    renderKeranjang();
-}
+function hapusItem(i) { keranjangData.splice(i, 1); renderKeranjang(); }
 
 function hitungKembalian() {
     const bayarVal = Number(bayarInput.value) || 0;
     const sisa = bayarVal - totalBayar;
     kembalian.innerText = formatRupiah(sisa > 0 ? sisa : 0);
-    if (sisa < 0) {
-        kembalian.classList.add('text-danger');
-    } else {
-        kembalian.classList.remove('text-danger');
-    }
 }
+bayarInput.addEventListener("input", hitungKembalian);
 
-if (bayarInput) {
-    bayarInput.addEventListener("input", hitungKembalian);
-}
-
-// ================== CHECKOUT & PRINT ==================
 function checkout() {
-    if (keranjangData.length === 0) {
-        Swal.fire('Keranjang Kosong', 'Pilih produk terlebih dahulu!', 'info');
-        return;
-    }
-    
     const bayarVal = Number(bayarInput.value) || 0;
-    if (bayarVal < totalBayar) {
-        Swal.fire('Uang Kurang!', 'Jumlah bayar tidak mencukupi total belanja.', 'error');
-        return;
+    if (keranjangData.length === 0 || bayarVal < totalBayar) {
+        Swal.fire('Gagal', 'Keranjang kosong atau uang kurang!', 'error'); return;
     }
-
-    const transaksiBaru = {
-        id: "TRX-" + Date.now(),
-        tanggal: new Date().toLocaleString('id-ID'),
-        items: [...keranjangData],
-        total: totalBayar,
-        bayar: bayarVal,
-        kembali: bayarVal - totalBayar,
-        toko: "KASIR UMKM PRO",
-        alamat: "Jl. Raya Bisnis Digital No. 1"
-    };
-
-    // 1. Simpan ke LocalStorage
-    let listRiwayat = JSON.parse(localStorage.getItem("riwayat")) || [];
-    listRiwayat.push(transaksiBaru);
-    localStorage.setItem("riwayat", JSON.stringify(listRiwayat));
-
-    // 2. TRIGGER CETAK KE PRINTER FLUTTER
-    if (window.PrintChannel) {
-        window.PrintChannel.postMessage(JSON.stringify(transaksiBaru));
-    }
-
-    Swal.fire({
-        icon: 'success',
-        title: 'Transaksi Berhasil!',
-        text: 'Struk sedang dicetak...',
-        showConfirmButton: false,
-        timer: 2500
+    const trx = { id: "TRX-"+Date.now(), tanggal: new Date().toLocaleString('id-ID'), items: [...keranjangData], total: totalBayar, bayar: bayarVal, kembali: bayarVal - totalBayar };
+    let riwayat = JSON.parse(localStorage.getItem("riwayat")) || [];
+    riwayat.push(trx);
+    localStorage.setItem("riwayat", JSON.stringify(riwayat));
+    if (window.PrintChannel) window.PrintChannel.postMessage(JSON.stringify(trx));
+    
+    Swal.fire('Berhasil!', 'Transaksi Selesai', 'success').then(() => {
+        keranjangData = []; bayarInput.value = ""; renderKeranjang(); showPage('riwayat');
     });
-
-    // 3. Reset Form Kasir
-    keranjangData = [];
-    bayarInput.value = "";
-    renderKeranjang();
-    
-    // 4. Pindah ke halaman riwayat
-    setTimeout(() => showPage('riwayat'), 2500);
-}
-
-function cetakUlang(index) {
-    const dataRiwayat = JSON.parse(localStorage.getItem("riwayat")) || [];
-    const data = dataRiwayat[index];
-    
-    if (window.PrintChannel && data) {
-        window.PrintChannel.postMessage(JSON.stringify(data));
-        Toast.fire({ icon: 'info', title: 'Mengirim data ke printer...' });
-    } else {
-        Swal.fire('Gagal', 'Printer tidak terdeteksi.', 'error');
-    }
 }
 
 function renderRiwayat() {
-    if (!riwayatList) return;
-    const dataRiwayat = JSON.parse(localStorage.getItem("riwayat")) || [];
-    riwayatList.innerHTML = "";
-
-    if (dataRiwayat.length === 0) {
-        riwayatList.innerHTML = `<tr><td colspan="3" style="text-align:center; padding:20px;">Belum ada riwayat.</td></tr>`;
-        return;
-    }
-
-    // Map untuk mempertahankan index asli saat di-reverse
-    const sortedRiwayat = dataRiwayat.map((item, index) => ({...item, originalIndex: index})).reverse();
-
-    sortedRiwayat.forEach((item) => {
-        riwayatList.innerHTML += `
-            <tr>
-                <td>${item.tanggal}</td>
-                <td style="font-weight:bold; color:#d84315;">Rp ${formatRupiah(item.total)}</td>
-                <td style="display:flex; gap:5px; justify-content:center;">
-                    <button onclick="cetakUlang(${item.originalIndex})" style="background:#2196f3; color:white; border:none; padding:8px; border-radius:8px; cursor:pointer;">🖨️</button>
-                    <button onclick="hapusRiwayat(${item.originalIndex})" style="background:#f44336; color:white; border:none; padding:8px; border-radius:8px; cursor:pointer;">🗑️</button>
-                </td>
-            </tr>`;
+    const data = JSON.parse(localStorage.getItem("riwayat")) || [];
+    riwayatList.innerHTML = data.length === 0 ? "<tr><td colspan='3'>Kosong</td></tr>" : "";
+    data.reverse().forEach((item, i) => {
+        riwayatList.innerHTML += `<tr><td>${item.tanggal}</td><td>Rp ${formatRupiah(item.total)}</td><td><button onclick="hapusRiwayat(${data.length-1-i})" style="background:red; color:white; border:none; padding:5px 10px; border-radius:5px;">Hapus</button></td></tr>`;
     });
 }
 
 function hapusRiwayat(index) {
-    Swal.fire({
-        title: 'Hapus Riwayat?',
-        text: "Catatan transaksi ini akan dihapus permanen.",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#f44336',
-        confirmButtonText: 'Ya, Hapus!'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            let listRiwayat = JSON.parse(localStorage.getItem("riwayat")) || [];
-            listRiwayat.splice(index, 1);
-            localStorage.setItem("riwayat", JSON.stringify(listRiwayat));
-            renderRiwayat();
-            Toast.fire({ icon: 'success', title: 'Riwayat dihapus' });
-        }
-    });
+    let riwayat = JSON.parse(localStorage.getItem("riwayat")) || [];
+    riwayat.splice(index, 1);
+    localStorage.setItem("riwayat", JSON.stringify(riwayat));
+    renderRiwayat();
+    Toast.fire({ icon: 'success', title: 'Riwayat dihapus' });
 }
 
-// ================== INITIALIZATION ==================
-document.addEventListener("DOMContentLoaded", () => {
-    showPage("produk");
-});
+document.addEventListener("DOMContentLoaded", () => { renderProduk(); showPage('produk'); });
