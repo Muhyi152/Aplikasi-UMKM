@@ -4,18 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Kasir UMKM PRO</title>
-    
-    <!-- Google Fonts: Poppins -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
-    
-    <!-- SweetAlert2 untuk Alert Modern -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
-    <!-- File CSS Eksternal -->
     <link rel="stylesheet" href="style.css">
-
     <style>
-        /* CSS Inline Tambahan untuk Transisi Halaman */
         .page-section { display: none; }
         .page-section.active { display: block; animation: fadeIn 0.4s ease; }
         @keyframes fadeIn {
@@ -27,14 +19,11 @@
 <body>
 
 <div class="app">
-
-    <!-- ================= SIDEBAR / NAVIGATION ================= -->
     <aside class="sidebar">
         <div class="sidebar-header">
             <h2>🏪 KASIR PRO</h2>
             <button class="menu-toggle" onclick="toggleMenu()">☰</button>
         </div>
-
         <ul id="menuList">
             <li onclick="showPage('produk')">📦 Manajemen Produk</li>
             <li onclick="showPage('transaksi')">🛒 Kasir / Penjualan</li>
@@ -42,9 +31,7 @@
         </ul>
     </aside>
 
-    <!-- ================= MAIN CONTENT ================= -->
     <main class="content">
-
         <!-- HALAMAN 1: MANAJEMEN PRODUK -->
         <section id="produk" class="page-section active">
             <h3>📦 Manajemen Produk</h3>
@@ -55,10 +42,9 @@
                 <label>Harga Jual (Rp)</label>
                 <input type="number" id="hargaProduk" placeholder="Contoh: 25000">
 
-                <!-- Hidden input untuk menyimpan Base64 foto -->
                 <input type="hidden" id="fotoProduk">
                 
-                <button type="button" onclick="ambilFoto()" style="background: #2196F3; color: white; margin-bottom: 10px;">
+                <button type="button" onclick="ambilFoto()" style="background: #2196F3; color: white; margin-bottom: 10px; border:none; padding:10px; border-radius:8px; width:100%; cursor:pointer;">
                     📷 Pilih Foto dari Galeri
                 </button>
 
@@ -66,58 +52,40 @@
                     <img id="previewFoto" src="" style="display:none; margin: 10px auto; width: 120px; height: 120px; border-radius: 12px; object-fit: cover; border: 2px solid #ddd;">
                 </div>
 
-                <button type="button" id="btnSimpan" onclick="simpanProduk()" style="background: #4CAF50; color: white;">
+                <button type="button" id="btnSimpan" onclick="simpanProduk()" style="background: #4CAF50; color: white; border:none; padding:12px; border-radius:8px; width:100%; font-weight:bold; cursor:pointer;">
                     Simpan Produk
                 </button>
             </div>
 
             <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ddd;">
-            <div id="produkList" class="produk-grid">
-                <!-- Produk akan muncul di sini via script.js -->
-            </div>
+            <div id="produkList" class="produk-grid"></div>
         </section>
 
-
-        <!-- HALAMAN 2: TRANSAKSI / KASIR -->
+        <!-- HALAMAN 2: TRANSAKSI -->
         <section id="transaksi" class="page-section">
             <h3>🛒 Kasir</h3>
-            <div id="produkTransaksi" class="produk-grid">
-                <!-- List produk untuk dibeli muncul di sini -->
-            </div>
-
+            <div id="produkTransaksi" class="produk-grid"></div>
             <div class="cart-section">
                 <h3>🧺 Keranjang</h3>
                 <div class="table-wrapper">
                     <table>
                         <thead>
-                            <tr>
-                                <th>Item</th>
-                                <th>Qty</th>
-                                <th>Subtotal</th>
-                                <th></th>
-                            </tr>
+                            <tr><th>Item</th><th>Qty</th><th>Subtotal</th><th></th></tr>
                         </thead>
-                        <tbody id="keranjang">
-                            <!-- Item keranjang muncul di sini -->
-                        </tbody>
+                        <tbody id="keranjang"></tbody>
                     </table>
                 </div>
-
                 <div class="pembayaran">
-                    <h4>Total: <span id="total">0</span></h4>
-                    
+                    <h4>Total: Rp <span id="total">0</span></h4>
                     <label>Uang Bayar (Rp)</label>
-                    <input type="number" id="bayar" placeholder="Masukkan jumlah uang" oninput="hitungKembalian()">
-                    
-                    <h4>Kembali: <span id="kembalian" class="text-danger">0</span></h4>
-                    
-                    <button onclick="checkout()" class="bg-success" style="padding: 15px; font-size: 1.1rem; margin-top: 15px;">
+                    <input type="number" id="bayar" placeholder="Masukkan jumlah uang">
+                    <h4>Kembali: Rp <span id="kembalian" class="text-danger">0</span></h4>
+                    <button onclick="checkout()" class="bg-success" style="padding: 15px; font-size: 1.1rem; margin-top: 15px; width:100%; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">
                         ✅ SELESAI & CETAK STRUK
                     </button>
                 </div>
             </div>
         </section>
-
 
         <!-- HALAMAN 3: RIWAYAT -->
         <section id="riwayat" class="page-section">
@@ -125,71 +93,19 @@
             <div class="table-wrapper">
                 <table>
                     <thead>
-                        <tr>
-                            <th>Waktu</th>
-                            <th>Total</th>
-                            <th>Aksi</th>
-                        </tr>
+                        <tr><th>Waktu</th><th>Total</th><th>Aksi</th></tr>
                     </thead>
-                    <tbody id="riwayatList">
-                        <!-- Data riwayat muncul di sini -->
-                    </tbody>
+                    <tbody id="riwayatList"></tbody>
                 </table>
             </div>
         </section>
-
     </main>
 </div>
 
-<!-- FILE JAVASCRIPT -->
 <script src="script.js"></script>
-
 <script>
-    /* 1. Navigasi Sidebar Mobile */
-    function toggleMenu() {
-        document.getElementById("menuList").classList.toggle("show");
-    }
-
-    function closeMenu() {
-        document.getElementById("menuList").classList.remove("show");
-    }
-
-    /* 2. Bridge ke Flutter: Ambil Foto */
-    function ambilFoto() {
-        if (window.ImageChannel) {
-            window.ImageChannel.postMessage("pick");
-        } else {
-            Swal.fire({
-                icon: 'info',
-                title: 'Aplikasi Mobile',
-                text: 'Fitur galeri hanya tersedia saat dibuka di aplikasi HP.',
-                confirmButtonColor: '#ff5722'
-            });
-        }
-    }
-
-    /* 3. Bridge dari Flutter: Set Foto (Wajib Global) */
-    window.setFoto = function(base64) {
-        const input = document.getElementById("fotoProduk");
-        const preview = document.getElementById("previewFoto");
-
-        if (input && preview) {
-            input.value = base64;
-            preview.src = base64;
-            preview.style.display = "block";
-            
-            // Notifikasi toast kecil
-            Swal.fire({
-                toast: true,
-                position: 'top',
-                icon: 'success',
-                title: 'Foto berhasil dimuat',
-                showConfirmButton: false,
-                timer: 1500
-            });
-        }
-    }
+    function toggleMenu() { document.getElementById("menuList").classList.toggle("show"); }
+    function closeMenu() { document.getElementById("menuList").classList.remove("show"); }
 </script>
-
 </body>
 </html>
